@@ -12,7 +12,7 @@ interface DocumentExhibitProps {
 }
 
 export function DocumentExhibit({ exhibit, onClick, onPointerOver, onPointerOut }: DocumentExhibitProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const meshRef = useRef<THREE.Group>(null);
   const [isHovered, setIsHovered] = useState(false);
   const scale = exhibit.scale ?? 1;
 
@@ -26,49 +26,76 @@ export function DocumentExhibit({ exhibit, onClick, onPointerOver, onPointerOut 
   });
 
   return (
-    <group>
-      {/* Document base */}
-      <mesh position={[0, -0.8, 0]}>
-        <boxGeometry args={[1.6, 0.1, 0.4]} />
-        <meshStandardMaterial color="#3a3a3a" metalness={0.6} roughness={0.3} />
+    <group
+      ref={meshRef}
+      onClick={onClick}
+      onPointerOver={(e) => {
+        setIsHovered(true);
+        onPointerOver?.(e);
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        setIsHovered(false);
+        onPointerOut?.();
+        document.body.style.cursor = 'default';
+      }}
+    >
+      {/* 底座 */}
+      <mesh position={[0, -1, 0]}>
+        <boxGeometry args={[1.8, 0.15, 0.6]} />
+        <meshStandardMaterial color="#1a1a2e" metalness={0.8} roughness={0.2} />
       </mesh>
 
-      {/* Document */}
-      <mesh
-        ref={meshRef}
-        onClick={onClick}
-        onPointerOver={(e) => {
-          setIsHovered(true);
-          onPointerOver?.(e);
-          document.body.style.cursor = 'pointer';
-        }}
-        onPointerOut={() => {
-          setIsHovered(false);
-          onPointerOut?.();
-          document.body.style.cursor = 'default';
-        }}
-      >
-        <boxGeometry args={[1.4, 2, 0.05]} />
-        <meshStandardMaterial color="#f5f5f5" roughness={0.8} />
+      {/* 底座发光边 */}
+      <mesh position={[0, -0.92, 0]}>
+        <boxGeometry args={[1.85, 0.02, 0.65]} />
+        <meshBasicMaterial color="#ff9800" transparent opacity={0.6} />
       </mesh>
 
-      {/* Document lines */}
-      {[0.6, 0.4, 0.2, 0, -0.2, -0.4].map((y, i) => (
-        <mesh key={i} position={[0, y, 0.03]}>
-          <boxGeometry args={[1, 0.05, 0.01]} />
+      {/* 文档主体 */}
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[1.4, 2, 0.08]} />
+        <meshStandardMaterial color="#f0f0f0" roughness={0.9} />
+      </mesh>
+
+      {/* 发光边框 */}
+      <mesh position={[0, 0, 0.045]}>
+        <boxGeometry args={[1.45, 2.05, 0.01]} />
+        <meshBasicMaterial 
+          color={isHovered ? '#ffc107' : '#ff9800'} 
+          transparent 
+          opacity={isHovered ? 0.8 : 0.3} 
+        />
+      </mesh>
+
+      {/* 文档线条 */}
+      {[0.7, 0.5, 0.3, 0.1, -0.1, -0.3].map((y, i) => (
+        <mesh key={i} position={[0, y, 0.05]}>
+          <boxGeometry args={[1, 0.04, 0.01]} />
           <meshStandardMaterial color="#cccccc" />
         </mesh>
       ))}
 
-      {/* Document icon */}
+      {/* 文档图标 */}
       <Text
-        position={[0, 0.7, 0.03]}
-        fontSize={0.3}
+        position={[0, 0.8, 0.06]}
+        fontSize={0.25}
         color="#ff9800"
         anchorX="center"
         anchorY="middle"
       >
         📄
+      </Text>
+
+      {/* 文档标识 */}
+      <Text
+        position={[0, -0.7, 0.06]}
+        fontSize={0.12}
+        color="#ff9800"
+        anchorX="center"
+        anchorY="middle"
+      >
+        DOCUMENT
       </Text>
     </group>
   );

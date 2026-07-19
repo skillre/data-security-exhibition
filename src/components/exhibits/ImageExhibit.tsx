@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -12,12 +12,13 @@ interface ImageExhibitProps {
 }
 
 export function ImageExhibit({ exhibit, onClick, onPointerOver, onPointerOut }: ImageExhibitProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const meshRef = useRef<THREE.Group>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const scale = exhibit.scale ?? 1;
 
   useFrame((_, delta) => {
     if (!meshRef.current) return;
-    const target = meshRef.current.userData.isHovered ? 1.05 : 1.0;
+    const target = isHovered ? 1.05 : 1.0;
     meshRef.current.scale.lerp(
       new THREE.Vector3(target * scale, target * scale, target * scale),
       delta * 8
@@ -25,35 +26,45 @@ export function ImageExhibit({ exhibit, onClick, onPointerOver, onPointerOut }: 
   });
 
   return (
-    <group>
-      {/* Frame */}
-      <mesh
-        ref={meshRef}
-        onClick={onClick}
-        onPointerOver={(e) => {
-          if (meshRef.current) meshRef.current.userData.isHovered = true;
-          onPointerOver?.(e);
-          document.body.style.cursor = 'pointer';
-        }}
-        onPointerOut={() => {
-          if (meshRef.current) meshRef.current.userData.isHovered = false;
-          onPointerOut?.();
-          document.body.style.cursor = 'default';
-        }}
-      >
-        <boxGeometry args={[2, 1.5, 0.1]} />
-        <meshStandardMaterial color="#1e3a5f" metalness={0.3} roughness={0.4} />
+    <group
+      ref={meshRef}
+      onClick={onClick}
+      onPointerOver={(e) => {
+        setIsHovered(true);
+        onPointerOver?.(e);
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        setIsHovered(false);
+        onPointerOut?.();
+        document.body.style.cursor = 'default';
+      }}
+    >
+      {/* 外框 - 发光边框 */}
+      <mesh>
+        <boxGeometry args={[2.2, 1.7, 0.15]} />
+        <meshStandardMaterial color="#0a0a2a" metalness={0.9} roughness={0.1} />
       </mesh>
 
-      {/* Image placeholder */}
-      <mesh position={[0, 0, 0.06]}>
-        <planeGeometry args={[1.8, 1.3]} />
-        <meshStandardMaterial color="#2a5a8f" />
+      {/* 发光边框 */}
+      <mesh position={[0, 0, 0.08]}>
+        <boxGeometry args={[2.25, 1.75, 0.01]} />
+        <meshBasicMaterial 
+          color={isHovered ? '#00ffff' : '#00d4ff'} 
+          transparent 
+          opacity={isHovered ? 0.8 : 0.4} 
+        />
       </mesh>
 
-      {/* Category icon */}
+      {/* 展示区域 */}
+      <mesh position={[0, 0, 0.09]}>
+        <planeGeometry args={[2, 1.5]} />
+        <meshStandardMaterial color="#0d1f3c" />
+      </mesh>
+
+      {/* 图片图标 */}
       <Text
-        position={[0, 0, 0.07]}
+        position={[0, 0.1, 0.1]}
         fontSize={0.5}
         color="#4fc3f7"
         anchorX="center"
@@ -61,6 +72,12 @@ export function ImageExhibit({ exhibit, onClick, onPointerOver, onPointerOut }: 
       >
         🖼️
       </Text>
+
+      {/* 底部发光条 */}
+      <mesh position={[0, -0.9, 0.1]}>
+        <boxGeometry args={[2, 0.05, 0.02]} />
+        <meshBasicMaterial color="#00d4ff" transparent opacity={0.8} />
+      </mesh>
     </group>
   );
 }

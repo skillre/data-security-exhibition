@@ -1,4 +1,4 @@
-import { Environment } from '@react-three/drei';
+import { Environment, Stars } from '@react-three/drei';
 import { useExhibitionStore } from '../../store/useExhibitionStore';
 import { ExhibitionRoom } from './ExhibitionRoom';
 import { ExhibitRenderer } from '../exhibits/ExhibitRenderer';
@@ -13,8 +13,22 @@ export function Scene() {
 
   return (
     <>
+      {/* 背景星空 */}
+      <Stars
+        radius={50}
+        depth={50}
+        count={1000}
+        factor={2}
+        saturation={0}
+        fade
+        speed={0.5}
+      />
+
+      {/* 雾效果 */}
+      <fog attach="fog" args={['#0a0a1a', 10, 40]} />
+
       <Lighting />
-      <Environment preset="city" background={false} />
+      <Environment preset="night" background={false} />
       <ExhibitionRoom />
       
       {exhibits.map((exhibit) => (

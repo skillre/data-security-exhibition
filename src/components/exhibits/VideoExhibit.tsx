@@ -12,7 +12,7 @@ interface VideoExhibitProps {
 }
 
 export function VideoExhibit({ exhibit, onClick, onPointerOver, onPointerOut }: VideoExhibitProps) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const meshRef = useRef<THREE.Group>(null);
   const [isHovered, setIsHovered] = useState(false);
   const scale = exhibit.scale ?? 1;
 
@@ -26,47 +26,74 @@ export function VideoExhibit({ exhibit, onClick, onPointerOver, onPointerOut }: 
   });
 
   return (
-    <group>
-      {/* Screen frame */}
-      <mesh
-        ref={meshRef}
-        onClick={onClick}
-        onPointerOver={(e) => {
-          setIsHovered(true);
-          onPointerOver?.(e);
-          document.body.style.cursor = 'pointer';
-        }}
-        onPointerOut={() => {
-          setIsHovered(false);
-          onPointerOut?.();
-          document.body.style.cursor = 'default';
-        }}
-      >
-        <boxGeometry args={[3.2, 1.8, 0.1]} />
-        <meshStandardMaterial color="#111111" metalness={0.8} roughness={0.2} />
+    <group
+      ref={meshRef}
+      onClick={onClick}
+      onPointerOver={(e) => {
+        setIsHovered(true);
+        onPointerOver?.(e);
+        document.body.style.cursor = 'pointer';
+      }}
+      onPointerOut={() => {
+        setIsHovered(false);
+        onPointerOut?.();
+        document.body.style.cursor = 'default';
+      }}
+    >
+      {/* 外框 */}
+      <mesh>
+        <boxGeometry args={[3.4, 2, 0.15]} />
+        <meshStandardMaterial color="#0a0a2a" metalness={0.9} roughness={0.1} />
       </mesh>
 
-      {/* Screen */}
-      <mesh position={[0, 0, 0.06]}>
-        <planeGeometry args={[3, 1.6]} />
-        <meshStandardMaterial color="#0a2a4a" />
+      {/* 发光边框 */}
+      <mesh position={[0, 0, 0.08]}>
+        <boxGeometry args={[3.45, 2.05, 0.01]} />
+        <meshBasicMaterial 
+          color={isHovered ? '#ff4081' : '#e91e63'} 
+          transparent 
+          opacity={isHovered ? 0.8 : 0.4} 
+        />
       </mesh>
 
-      {/* Play button */}
-      <mesh position={[0, 0, 0.07]}>
-        <circleGeometry args={[0.3, 32]} />
-        <meshStandardMaterial color="#4fc3f7" transparent opacity={0.8} />
+      {/* 屏幕 */}
+      <mesh position={[0, 0, 0.09]}>
+        <planeGeometry args={[3.2, 1.8]} />
+        <meshStandardMaterial color="#1a0a2a" />
       </mesh>
 
-      {/* Play icon */}
+      {/* 播放按钮背景 */}
+      <mesh position={[0, 0, 0.1]}>
+        <circleGeometry args={[0.4, 32]} />
+        <meshBasicMaterial color="#e91e63" transparent opacity={0.9} />
+      </mesh>
+
+      {/* 播放图标 */}
       <Text
-        position={[0, 0, 0.08]}
-        fontSize={0.3}
+        position={[0.05, 0, 0.11]}
+        fontSize={0.35}
         color="#ffffff"
         anchorX="center"
         anchorY="middle"
       >
         ▶
+      </Text>
+
+      {/* 底部发光条 */}
+      <mesh position={[0, -1.05, 0.1]}>
+        <boxGeometry args={[3.2, 0.05, 0.02]} />
+        <meshBasicMaterial color="#e91e63" transparent opacity={0.8} />
+      </mesh>
+
+      {/* 视频标识 */}
+      <Text
+        position={[1.4, 0.8, 0.1]}
+        fontSize={0.15}
+        color="#e91e63"
+        anchorX="center"
+        anchorY="middle"
+      >
+        VIDEO
       </Text>
     </group>
   );
