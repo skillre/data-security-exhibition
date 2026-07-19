@@ -9,7 +9,7 @@ export function ControlHints() {
   useEffect(() => {
     if (showHints && cameraMode === 'free') {
       setVisible(true);
-      const timer = setTimeout(() => setVisible(false), 5000);
+      const timer = setTimeout(() => setVisible(false), 8000);
       return () => clearTimeout(timer);
     }
   }, [cameraMode, showHints]);
@@ -24,60 +24,29 @@ export function ControlHints() {
       zIndex: 50
     }}>
       <div style={{
-        background: 'rgba(15, 23, 42, 0.9)',
+        background: 'rgba(15, 23, 42, 0.95)',
         backdropFilter: 'blur(8px)',
-        border: '1px solid rgba(59, 130, 246, 0.3)',
+        border: '1px solid rgba(59, 130, 246, 0.4)',
         borderRadius: '12px',
-        padding: '16px',
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
+        padding: '16px 20px',
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)'
       }}>
-        <div style={{ color: '#93c5fd', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>操作指南</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', color: '#94a3b8', fontSize: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <kbd style={{
-              padding: '2px 6px',
-              background: 'rgba(30, 41, 59, 0.8)',
-              borderRadius: '4px',
-              color: '#cbd5e1',
-              fontFamily: 'monospace',
-              fontSize: '11px'
-            }}>W A S D</kbd>
-            <span>移动</span>
+        <div style={{ color: '#93c5fd', fontSize: '13px', fontWeight: 'bold', marginBottom: '10px' }}>🕹️ 自由漫游模式</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#cbd5e1', fontSize: '13px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <kbd style={{ padding: '4px 10px', background: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '6px', color: '#93c5fd', fontFamily: 'monospace', fontSize: '12px', minWidth: '80px', textAlign: 'center' }}>W A S D</kbd>
+            <span>移动视角</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <kbd style={{
-              padding: '2px 6px',
-              background: 'rgba(30, 41, 59, 0.8)',
-              borderRadius: '4px',
-              color: '#cbd5e1',
-              fontFamily: 'monospace',
-              fontSize: '11px'
-            }}>鼠标</kbd>
-            <span>环顾四周</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <kbd style={{ padding: '4px 10px', background: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '6px', color: '#93c5fd', fontFamily: 'monospace', fontSize: '12px', minWidth: '80px', textAlign: 'center' }}>鼠标左键拖拽</kbd>
+            <span>旋转视角</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <kbd style={{
-              padding: '2px 6px',
-              background: 'rgba(30, 41, 59, 0.8)',
-              borderRadius: '4px',
-              color: '#cbd5e1',
-              fontFamily: 'monospace',
-              fontSize: '11px'
-            }}>点击展品</kbd>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <kbd style={{ padding: '4px 10px', background: 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '6px', color: '#93c5fd', fontFamily: 'monospace', fontSize: '12px', minWidth: '80px', textAlign: 'center' }}>点击展品</kbd>
             <span>查看详情</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <kbd style={{
-              padding: '2px 6px',
-              background: 'rgba(30, 41, 59, 0.8)',
-              borderRadius: '4px',
-              color: '#cbd5e1',
-              fontFamily: 'monospace',
-              fontSize: '11px'
-            }}>ESC</kbd>
-            <span>退出漫游</span>
-          </div>
         </div>
+        <div style={{ color: '#64748b', fontSize: '11px', marginTop: '10px' }}>点击右上角"引导参观"可切换回引导模式</div>
       </div>
     </div>
   );

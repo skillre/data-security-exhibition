@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useProgress } from '@react-three/drei';
+import { useEffect, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { useExhibition } from '../store/useExhibition';
 import config from '../config/exhibition.json';
 import type { ExhibitionConfig } from '../types/exhibition';
@@ -13,16 +13,19 @@ import { CameraController } from '../camera/CameraController';
 const exhibitionConfig = config as unknown as ExhibitionConfig;
 
 export function ExhibitionHall() {
-  const { progress } = useProgress();
-  const setLoadProgress = useExhibition((s) => s.setLoadProgress);
   const setLoaded = useExhibition((s) => s.setLoaded);
+  const setLoadProgress = useExhibition((s) => s.setLoadProgress);
+  const frameCount = useRef(0);
 
-  useEffect(() => {
+  // 程序化场景没有外部资源需要加载，几帧后直接标记为已加载
+  useFrame(() => {
+    frameCount.current++;
+    const progress = Math.min(frameCount.current / 10 * 100, 100);
     setLoadProgress(progress);
-    if (progress >= 100) {
-      setTimeout(() => setLoaded(true), 500);
+    if (frameCount.current >= 15) {
+      setLoaded(true);
     }
-  }, [progress, setLoadProgress, setLoaded]);
+  });
 
   return (
     <>
