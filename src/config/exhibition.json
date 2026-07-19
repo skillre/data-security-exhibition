@@ -7,7 +7,7 @@
   "settings": {
     "backgroundColor": "#0a0e1a",
     "ambientColor": "#4488ff",
-    "ambientIntensity": 0.3,
+    "ambientIntensity": 0.8,
     "particleColor": "#4488ff"
   },
   "zones": [
@@ -17,8 +17,8 @@
       "description": "欢迎来到数据安全评估服务成果展",
       "position": [0, 0, 0],
       "size": [16, 12, 5],
-      "wallColor": "#0d1525",
-      "floorColor": "#0a1020",
+      "wallColor": "#1a2a4a",
+      "floorColor": "#111827",
       "exhibits": [
         {
           "id": "welcome-screen",
@@ -36,8 +36,8 @@
       "description": "项目过程中沉淀的核心文档资料",
       "position": [0, 0, -16],
       "size": [20, 16, 5],
-      "wallColor": "#0d1525",
-      "floorColor": "#0a1020",
+      "wallColor": "#1a2a4a",
+      "floorColor": "#111827",
       "exhibits": [
         {
           "id": "doc-assessment-report",
@@ -87,8 +87,8 @@
       "description": "项目宣传海报和可视化成果",
       "position": [-20, 0, 0],
       "size": [16, 12, 5],
-      "wallColor": "#0d1525",
-      "floorColor": "#0a1020",
+      "wallColor": "#1a2a4a",
+      "floorColor": "#111827",
       "exhibits": [
         {
           "id": "poster-security-overview",
@@ -130,8 +130,8 @@
       "description": "项目宣传视频和演示",
       "position": [20, 0, 0],
       "size": [16, 12, 5],
-      "wallColor": "#0d1525",
-      "floorColor": "#0a1020",
+      "wallColor": "#1a2a4a",
+      "floorColor": "#111827",
       "exhibits": [
         {
           "id": "video-project-intro",
@@ -157,8 +157,8 @@
       "description": "项目关键数据和成果指标",
       "position": [0, 0, 16],
       "size": [16, 12, 5],
-      "wallColor": "#0d1525",
-      "floorColor": "#0a1020",
+      "wallColor": "#1a2a4a",
+      "floorColor": "#111827",
       "exhibits": [
         {
           "id": "dataviz-risk-scores",

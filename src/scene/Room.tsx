@@ -14,8 +14,8 @@ export function Room({
   width,
   depth,
   height,
-  wallColor = '#0d1525',
-  floorColor = '#0a1020',
+  wallColor = '#1a2a4a',
+  floorColor = '#111827',
   position = [0, 0, 0],
 }: RoomProps) {
   // 创建边缘发光效果的材质
@@ -41,7 +41,7 @@ export function Room({
 
   const ceilingMaterial = useMemo(
     () => new THREE.MeshStandardMaterial({
-      color: '#080c16',
+      color: '#0f172a',
       roughness: 0.95,
     }),
     []

@@ -1,17 +1,17 @@
 export function Lighting() {
   return (
     <>
-      {/* 环境光 - 提高基础亮度 */}
-      <ambientLight intensity={0.5} color="#2a3a5a" />
+      {/* 环境光 - 大幅提高基础亮度 */}
+      <ambientLight intensity={1.0} color="#3a4a6a" />
 
       {/* 半球光 - 天空/地面填充 */}
-      <hemisphereLight args={['#3a5a8a', '#1a1a2e', 0.6]} />
+      <hemisphereLight args={['#5a7aaa', '#2a2a3e', 1.0]} />
 
-      {/* 主方向光 - 模拟天窗 */}
+      {/* 主方向光 */}
       <directionalLight
         position={[10, 15, 10]}
-        intensity={1.5}
-        color="#6699ff"
+        intensity={2.0}
+        color="#88aaff"
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-camera-far={50}
@@ -22,27 +22,22 @@ export function Lighting() {
         shadow-bias={-0.0001}
       />
 
-      {/* 补充方向光 - 减少阴影死角 */}
+      {/* 补充方向光 */}
       <directionalLight
         position={[-10, 10, -10]}
-        intensity={0.5}
-        color="#4466aa"
+        intensity={1.0}
+        color="#6688cc"
       />
 
-      {/* 科技感点光源 - 入口大厅 */}
-      <pointLight position={[0, 4, 0]} intensity={0.8} color="#4488ff" distance={20} decay={2} />
+      {/* 各区域点光源 - 更亮 */}
+      <pointLight position={[0, 4, 0]} intensity={1.5} color="#6699ff" distance={25} decay={2} />
+      <pointLight position={[0, 3, -16]} intensity={1.2} color="#6699ff" distance={20} decay={2} />
+      <pointLight position={[-20, 3, 0]} intensity={1.2} color="#6699ff" distance={20} decay={2} />
+      <pointLight position={[20, 3, 0]} intensity={1.2} color="#6699ff" distance={20} decay={2} />
+      <pointLight position={[0, 3, 16]} intensity={1.2} color="#6699ff" distance={20} decay={2} />
 
-      {/* 科技感点光源 - 文档区方向 */}
-      <pointLight position={[0, 3, -16]} intensity={0.6} color="#4488ff" distance={15} decay={2} />
-
-      {/* 科技感点光源 - 海报区方向 */}
-      <pointLight position={[-20, 3, 0]} intensity={0.6} color="#4488ff" distance={15} decay={2} />
-
-      {/* 科技感点光源 - 视频区方向 */}
-      <pointLight position={[20, 3, 0]} intensity={0.6} color="#4488ff" distance={15} decay={2} />
-
-      {/* 科技感点光源 - 数据看板方向 */}
-      <pointLight position={[0, 3, 16]} intensity={0.6} color="#4488ff" distance={15} decay={2} />
+      {/* 额外的环境光提升 */}
+      <pointLight position={[0, 5, 0]} intensity={0.5} color="#ffffff" distance={40} decay={1} />
     </>
   );
 }
