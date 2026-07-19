@@ -2,6 +2,8 @@ import { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useProgress } from '@react-three/drei';
 import { Scene } from './components/canvas/Scene';
+import { OverlayUI } from './components/ui/OverlayUI';
+import { LoadingScreen } from './components/ui/LoadingScreen';
 import { useExhibitionStore } from './store/useExhibitionStore';
 import { useLoadingStore } from './store/useLoadingStore';
 import { defaultConfig } from './config/exhibition';
@@ -87,6 +89,12 @@ export default function App() {
           <LoadingManager />
         </Suspense>
       </Canvas>
+      
+      {/* UI 覆盖层 - 在 Canvas 外部 */}
+      <OverlayUI />
+      
+      {/* 加载屏幕 */}
+      <LoadingScreen />
     </div>
   );
 }
