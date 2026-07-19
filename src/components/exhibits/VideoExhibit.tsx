@@ -1,91 +1,73 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type { ExhibitItem } from '../../types/exhibit';
 
 interface VideoExhibitProps {
   exhibit: ExhibitItem;
-  onClick?: (e: THREE.Event) => void;
-  onPointerOver?: (e: THREE.Event) => void;
+  onClick?: (e: any) => void;
+  onPointerOver?: (e: any) => void;
   onPointerOut?: () => void;
 }
 
 export function VideoExhibit({ exhibit, onClick, onPointerOver, onPointerOut }: VideoExhibitProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [texture, setTexture] = useState<THREE.VideoTexture | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const scale = exhibit.scale ?? 1;
 
-  useEffect(() => {
-    const video = document.createElement('video');
-    video.src = exhibit.mediaSrc;
-    video.crossOrigin = 'anonymous';
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.preload = 'metadata';
-    videoRef.current = video;
-
-    const tex = new THREE.VideoTexture(video);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.minFilter = THREE.LinearFilter;
-    tex.magFilter = THREE.LinearFilter;
-    setTexture(tex);
-
-    return () => {
-      video.pause();
-      video.src = '';
-      videoRef.current = null;
-      tex.dispose();
-      setTexture(null);
-    };
-  }, [exhibit.mediaSrc]);
-
-  const handlePlay = () => {
-    if (videoRef.current && !isPlaying) {
-      videoRef.current.play().catch(() => {});
-      setIsPlaying(true);
-    }
-  };
-
-  const handlePause = () => {
-    if (videoRef.current && isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  useFrame(() => {
-    if (texture) texture.needsUpdate = true;
+  useFrame((_, delta) => {
+    if (!meshRef.current) return;
+    const target = isHovered ? 1.05 : 1.0;
+    meshRef.current.scale.lerp(
+      new THREE.Vector3(target * scale, target * scale, target * scale),
+      delta * 8
+    );
   });
 
-  if (!texture) return null;
-
   return (
-    <mesh
-      ref={meshRef}
-      onClick={(e) => {
-        if (isPlaying) handlePause(); else handlePlay();
-        onClick?.(e);
-      }}
-      onPointerOver={(e) => {
-        handlePlay();
-        onPointerOver?.(e);
-        document.body.style.cursor = 'pointer';
-      }}
-      onPointerOut={() => {
-        handlePause();
-        onPointerOut?.();
-        document.body.style.cursor = 'default';
-      }}
-    >
-      <planeGeometry args={[3.2, 1.8]} />
-      <meshStandardMaterial
-        map={texture}
-        side={THREE.DoubleSide}
-        roughness={0.2}
-        metalness={0.0}
-      />
-    </mesh>
+    <group>
+      {/* Screen frame */}
+      <mesh
+        ref={meshRef}
+        onClick={onClick}
+        onPointerOver={(e) => {
+          setIsHovered(true);
+          onPointerOver?.(e);
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          setIsHovered(false);
+          onPointerOut?.();
+          document.body.style.cursor = 'default';
+        }}
+      >
+        <boxGeometry args={[3.2, 1.8, 0.1]} />
+        <meshStandardMaterial color="#111111" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* Screen */}
+      <mesh position={[0, 0, 0.06]}>
+        <planeGeometry args={[3, 1.6]} />
+        <meshStandardMaterial color="#0a2a4a" />
+      </mesh>
+
+      {/* Play button */}
+      <mesh position={[0, 0, 0.07]}>
+        <circleGeometry args={[0.3, 32]} />
+        <meshStandardMaterial color="#4fc3f7" transparent opacity={0.8} />
+      </mesh>
+
+      {/* Play icon */}
+      <Text
+        position={[0, 0, 0.08]}
+        fontSize={0.3}
+        color="#ffffff"
+        anchorX="center"
+        anchorY="middle"
+      >
+        ▶
+      </Text>
+    </group>
   );
 }
