@@ -3,6 +3,7 @@ import { ExhibitDetailPanel } from './ExhibitDetailPanel';
 import { TourControls } from './TourControls';
 import { HelpOverlay } from './HelpOverlay';
 import { MiniMap } from './MiniMap';
+import { Crosshair } from './Crosshair';
 
 export function OverlayUI() {
   const selectedExhibit = useExhibitionStore((s) => s.selectedExhibit);
@@ -21,15 +22,25 @@ export function OverlayUI() {
       zIndex: 10,
       fontFamily: '"Noto Sans SC", sans-serif',
     }}>
+      {/* 准心 - 锁定模式时显示 */}
+      <Crosshair />
+      
+      {/* 操作指南 */}
       <HelpOverlay />
       
+      {/* 展品详情面板 */}
       {selectedExhibitData && (
         <div style={{ pointerEvents: 'auto' }}>
           <ExhibitDetailPanel exhibit={selectedExhibitData} />
         </div>
       )}
       
-      <TourControls />
+      {/* 导览控制 */}
+      <div style={{ pointerEvents: 'auto' }}>
+        <TourControls />
+      </div>
+      
+      {/* 小地图 */}
       <MiniMap />
     </div>
   );

@@ -12,8 +12,6 @@ const keys = {
   left: false,
   right: false,
   sprint: false,
-  up: false,
-  down: false,
 };
 
 const SPEED = 5;
@@ -21,7 +19,7 @@ const SPRINT_MULTIPLIER = 2.5;
 const BOUNDS = { minX: -9.5, maxX: 9.5, minZ: -9.5, maxZ: 9.5 };
 
 export function FirstPersonControls() {
-  const { camera, gl } = useThree();
+  const { camera, gl, raycaster } = useThree();
   const pointerLockRef = useRef<any>(null);
   
   const setPointerLocked = useControlsStore((s) => s.setPointerLocked);
@@ -42,19 +40,21 @@ export function FirstPersonControls() {
     cameraRotation.current.phi = Math.asin(direction.y);
   }, [camera]);
 
-  // 键盘事件监听
+  // 键盘事件监听 - 始终激活
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 如果有面板打开，不处理移动
+      if (selectedExhibit) return;
+      
       switch (e.code) {
         case 'KeyW': case 'ArrowUp': keys.forward = true; break;
         case 'KeyS': case 'ArrowDown': keys.backward = true; break;
         case 'KeyA': case 'ArrowLeft': keys.left = true; break;
         case 'KeyD': case 'ArrowRight': keys.right = true; break;
         case 'ShiftLeft': case 'ShiftRight': keys.sprint = true; break;
-        case 'Space': keys.up = true; break;
-        case 'ControlLeft': case 'ControlRight': keys.down = true; break;
       }
     };
+    
     const handleKeyUp = (e: KeyboardEvent) => {
       switch (e.code) {
         case 'KeyW': case 'ArrowUp': keys.forward = false; break;
@@ -62,8 +62,6 @@ export function FirstPersonControls() {
         case 'KeyA': case 'ArrowLeft': keys.left = false; break;
         case 'KeyD': case 'ArrowRight': keys.right = false; break;
         case 'ShiftLeft': case 'ShiftRight': keys.sprint = false; break;
-        case 'Space': keys.up = false; break;
-        case 'ControlLeft': case 'ControlRight': keys.down = false; break;
       }
     };
 
@@ -73,47 +71,45 @@ export function FirstPersonControls() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [selectedExhibit]);
 
   // ESC 键处理
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Escape') {
         if (selectedExhibit) {
-          // 如果有展品选中，先关闭面板
           selectExhibit(null);
-        } else if (isPointerLocked) {
-          // 如果是锁定模式，退出锁定
-          pointerLockRef.current?.unlock();
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedExhibit, selectExhibit, isPointerLocked]);
+  }, [selectedExhibit, selectExhibit]);
 
-  // 鼠标事件 - 自由模式下的拖动旋转
+  // 自由模式 - 鼠标拖动旋转
   useEffect(() => {
+    if (isPointerLocked) return; // 锁定模式下不处理
+    
     const canvas = gl.domElement;
     
     const handleMouseDown = (e: MouseEvent) => {
-      if (isPointerLocked || selectedExhibit) return;
-      if (e.button === 0) { // 左键
+      if (selectedExhibit) return;
+      if (e.button === 0) {
         setIsDragging(true);
         lastMousePos.current = { x: e.clientX, y: e.clientY };
       }
     };
     
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || isPointerLocked) return;
+      if (!isDragging || selectedExhibit) return;
       
       const deltaX = e.clientX - lastMousePos.current.x;
       const deltaY = e.clientY - lastMousePos.current.y;
       
-      cameraRotation.current.theta -= deltaX * 0.003;
+      cameraRotation.current.theta -= deltaX * 0.005;
       cameraRotation.current.phi = Math.max(
         -Math.PI / 3,
-        Math.min(Math.PI / 3, cameraRotation.current.phi - deltaY * 0.003)
+        Math.min(Math.PI / 3, cameraRotation.current.phi - deltaY * 0.005)
       );
       
       lastMousePos.current = { x: e.clientX, y: e.clientY };
@@ -136,10 +132,12 @@ export function FirstPersonControls() {
 
   // 滚轮缩放
   useEffect(() => {
+    if (isPointerLocked) return;
+    
     const canvas = gl.domElement;
     
     const handleWheel = (e: WheelEvent) => {
-      if (isPointerLocked || selectedExhibit) return;
+      if (selectedExhibit) return;
       
       const forward = new THREE.Vector3();
       camera.getWorldDirection(forward);
@@ -149,7 +147,6 @@ export function FirstPersonControls() {
       const distance = -e.deltaY * 0.01;
       camera.position.addScaledVector(forward, distance);
       
-      // 限制边界
       camera.position.x = Math.max(BOUNDS.minX, Math.min(BOUNDS.maxX, camera.position.x));
       camera.position.z = Math.max(BOUNDS.minZ, Math.min(BOUNDS.maxZ, camera.position.z));
     };
@@ -158,13 +155,14 @@ export function FirstPersonControls() {
     return () => canvas.removeEventListener('wheel', handleWheel);
   }, [camera, gl, isPointerLocked, selectedExhibit]);
 
-  // 每帧更新 - 移动和旋转
+  // 每帧更新 - 移动（两种模式都生效）
   useFrame((_, delta) => {
-    if (selectedExhibit) return; // 面板打开时不移动
+    if (selectedExhibit) return;
 
     const speed = SPEED * (keys.sprint ? SPRINT_MULTIPLIER : 1);
+    const moveVector = new THREE.Vector3();
 
-    // 计算移动方向
+    // 计算前向和右向向量
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
     forward.y = 0;
@@ -173,21 +171,17 @@ export function FirstPersonControls() {
     const right = new THREE.Vector3();
     right.crossVectors(forward, new THREE.Vector3(0, 1, 0));
 
+    // 计算移动
     const moveZ = (keys.forward ? 1 : 0) - (keys.backward ? 1 : 0);
     const moveX = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-    const moveY = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
 
-    // 应用移动
-    if (moveZ !== 0 || moveX !== 0 || moveY !== 0) {
-      const moveVector = new THREE.Vector3();
+    if (moveZ !== 0 || moveX !== 0) {
       moveVector.addScaledVector(forward, moveZ * speed * delta);
       moveVector.addScaledVector(right, moveX * speed * delta);
-      moveVector.y = moveY * speed * delta * 0.5;
 
       const nextPos = camera.position.clone().add(moveVector);
       nextPos.x = Math.max(BOUNDS.minX, Math.min(BOUNDS.maxX, nextPos.x));
       nextPos.z = Math.max(BOUNDS.minZ, Math.min(BOUNDS.maxZ, nextPos.z));
-      nextPos.y = Math.max(0.5, Math.min(3.5, nextPos.y));
 
       camera.position.copy(nextPos);
     }
@@ -202,7 +196,7 @@ export function FirstPersonControls() {
         'YXZ'
       );
       targetQuaternion.setFromEuler(euler);
-      camera.quaternion.slerp(targetQuaternion, 0.1);
+      camera.quaternion.slerp(targetQuaternion, 0.15);
     }
   });
 
@@ -213,42 +207,64 @@ export function FirstPersonControls() {
 
   const handleUnlock = useCallback(() => {
     setPointerLocked(false);
-  }, [setPointerLocked]);
+    // 退出锁定时，同步当前相机角度
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    cameraRotation.current.theta = Math.atan2(direction.x, direction.z);
+    cameraRotation.current.phi = Math.asin(direction.y);
+  }, [setPointerLocked, camera]);
 
-  // 点击空白区域进入锁定模式
+  // 点击事件 - 两种模式下都可以点击展品
   useEffect(() => {
     const canvas = gl.domElement;
     
-    const handleClick = () => {
-      // 如果已经有展品选中，不处理
+    const handleClick = (e: MouseEvent) => {
       if (selectedExhibit) return;
       
-      // 检查是否点击到了展品（通过 R3F 的事件系统处理）
-      // 这里只处理点击空白区域的情况
+      // 计算鼠标位置（归一化设备坐标）
+      const rect = canvas.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+
+      // 设置射线
+      raycaster.setFromCamera(mouse, camera);
+
+      // 检测与展品的交叉
+      // 需要收集所有展品的 meshes
+      const exhibitMeshes: THREE.Object3D[] = [];
+      canvas.dispatchEvent(new CustomEvent('get-exhibit-meshes', {
+        detail: { callback: (meshes: THREE.Object3D[]) => { exhibitMeshes.push(...meshes); } }
+      }));
+
+      const intersects = raycaster.intersectObjects(exhibitMeshes, true);
       
-      // 如果不是锁定模式，点击进入锁定模式
-      if (!isPointerLocked && !isDragging) {
-        // 延迟一点，避免和展品点击冲突
-        setTimeout(() => {
-          if (!selectedExhibit) {
-            pointerLockRef.current?.lock();
-          }
-        }, 100);
+      if (intersects.length > 0) {
+        // 找到最近的展品
+        let obj = intersects[0].object;
+        while (obj && !obj.userData.exhibitId) {
+          obj = obj.parent as THREE.Object3D;
+        }
+        
+        if (obj && obj.userData.exhibitId) {
+          selectExhibit(obj.userData.exhibitId);
+        }
+      } else if (!isPointerLocked && !isDragging) {
+        // 点击空白区域，进入锁定模式
+        pointerLockRef.current?.lock();
       }
     };
 
     canvas.addEventListener('click', handleClick);
     return () => canvas.removeEventListener('click', handleClick);
-  }, [gl, isPointerLocked, isDragging, selectedExhibit]);
+  }, [gl, camera, raycaster, isPointerLocked, isDragging, selectedExhibit, selectExhibit]);
 
   return (
-    <>
-      {/* 锁定模式控制器 */}
-      <PointerLockControls
-        ref={pointerLockRef}
-        onLock={handleLock}
-        onUnlock={handleUnlock}
-      />
-    </>
+    <PointerLockControls
+      ref={pointerLockRef}
+      onLock={handleLock}
+      onUnlock={handleUnlock}
+    />
   );
 }

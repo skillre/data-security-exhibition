@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -12,14 +12,21 @@ interface DocumentExhibitProps {
 }
 
 export function DocumentExhibit({ exhibit, onClick, onPointerOver, onPointerOut }: DocumentExhibitProps) {
-  const meshRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const [isHovered, setIsHovered] = useState(false);
   const scale = exhibit.scale ?? 1;
 
+  // 设置 exhibitId 到 userData
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.userData.exhibitId = exhibit.id;
+    }
+  }, [exhibit.id]);
+
   useFrame((_, delta) => {
-    if (!meshRef.current) return;
+    if (!groupRef.current) return;
     const target = isHovered ? 1.08 : 1.0;
-    meshRef.current.scale.lerp(
+    groupRef.current.scale.lerp(
       new THREE.Vector3(target * scale, target * scale, target * scale),
       delta * 8
     );
@@ -27,11 +34,15 @@ export function DocumentExhibit({ exhibit, onClick, onPointerOver, onPointerOut 
 
   return (
     <group
-      ref={meshRef}
-      onClick={onClick}
+      ref={groupRef}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.(exhibit);
+      }}
       onPointerOver={(e) => {
+        e.stopPropagation();
         setIsHovered(true);
-        onPointerOver?.(e);
+        onPointerOver?.(exhibit);
         document.body.style.cursor = 'pointer';
       }}
       onPointerOut={() => {
