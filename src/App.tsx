@@ -1,49 +1,92 @@
+import { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Suspense } from 'react';
-import { ExhibitionHall } from './scene/ExhibitionHall';
-import { Navigation } from './ui/Navigation';
-import { ExhibitDetail } from './ui/ExhibitDetail';
-import { Minimap } from './ui/Minimap';
-import { LoadingScreen } from './ui/LoadingScreen';
-import { ControlHints } from './ui/ControlHints';
-import { WebglFallback } from './ui/WebglFallback';
-import { isWebGLSupported } from './utils/webgl';
-import { detectDevice } from './utils/device';
+import { useProgress } from '@react-three/drei';
+import { Scene } from './components/canvas/Scene';
+import { useExhibitionStore } from './store/useExhibitionStore';
+import { useLoadingStore } from './store/useLoadingStore';
+import { defaultConfig } from './config/exhibition';
 
-function App() {
-  if (!isWebGLSupported()) {
-    return <WebglFallback />;
+function detectWebGL(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(canvas.getContext('webgl2') || canvas.getContext('webgl'));
+  } catch {
+    return false;
+  }
+}
+
+function LoadingManager() {
+  const { progress, active } = useProgress();
+  const setProgress = useLoadingStore((s) => s.setProgress);
+  const setSceneReady = useExhibitionStore((s) => s.setSceneReady);
+
+  useEffect(() => {
+    setProgress(progress);
+    if (!active && progress === 100) {
+      setTimeout(() => setSceneReady(true), 500);
+    }
+  }, [progress, active, setProgress, setSceneReady]);
+
+  return null;
+}
+
+export default function App() {
+  const [webGLSupported, setWebGLSupported] = useState<boolean | null>(null);
+  const setConfig = useExhibitionStore((s) => s.setConfig);
+
+  useEffect(() => {
+    setWebGLSupported(detectWebGL());
+    setConfig(defaultConfig);
+  }, [setConfig]);
+
+  if (webGLSupported === null) return null;
+
+  if (!webGLSupported) {
+    return (
+      <div style={{
+        width: '100vw',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0a0a1a',
+        color: '#fff',
+        fontFamily: '"Noto Sans SC", sans-serif',
+      }}>
+        <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>
+          您的浏览器不支持 WebGL
+        </h1>
+        <p style={{ color: 'rgba(255,255,255,0.7)' }}>
+          请使用 Chrome、Firefox、Safari 或 Edge 浏览器访问
+        </p>
+      </div>
+    );
   }
 
-  const device = detectDevice();
-
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#0a0e1a', overflow: 'hidden' }}>
-      {/* 3D 场景 */}
+    <div style={{ width: '100vw', height: '100vh', background: '#0a0a1a' }}>
       <Canvas
-        dpr={device.pixelRatio}
-        camera={{ fov: 75, near: 0.1, far: 1000, position: [0, 2, 6] }}
-        shadows={device.shadowsEnabled}
+        shadows
+        dpr={[1, 2]}
         gl={{
-          antialias: !device.isLowEnd,
-          powerPreference: device.isMobile ? 'low-power' : 'high-performance',
+          antialias: true,
+          powerPreference: 'high-performance',
           stencil: false,
+          depth: true,
         }}
-        performance={{ min: 0.5 }}
+        camera={{
+          fov: 70,
+          near: 0.1,
+          far: 100,
+          position: [0, 1.7, 5],
+        }}
       >
         <Suspense fallback={null}>
-          <ExhibitionHall />
+          <Scene />
+          <LoadingManager />
         </Suspense>
       </Canvas>
-
-      {/* UI 叠加层 */}
-      <Navigation />
-      <ExhibitDetail />
-      <Minimap />
-      <LoadingScreen />
-      <ControlHints />
     </div>
   );
 }
-
-export default App;

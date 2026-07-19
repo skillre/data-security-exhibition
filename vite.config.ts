@@ -1,19 +1,34 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
+  base: '/digital-exhibition-hall/',
   plugins: [react()],
-  base: '/',
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@store': path.resolve(__dirname, './src/store'),
+      '@data': path.resolve(__dirname, './src/config'),
+      '@types': path.resolve(__dirname, './src/types'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+    },
+  },
   build: {
-    outDir: 'dist',
-    assetsInlineLimit: 4096,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
         manualChunks: {
           three: ['three'],
-          r3f: ['@react-three/fiber', '@react-three/drei'],
+          'react-three': ['@react-three/fiber', '@react-three/drei'],
+          vendor: ['react', 'react-dom', 'zustand'],
         },
       },
     },
+  },
+  optimizeDeps: {
+    include: ['three', '@react-three/fiber', '@react-three/drei', 'zustand'],
   },
 });
