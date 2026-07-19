@@ -1,5 +1,8 @@
 import { useExhibition } from '../store/useExhibition';
 import config from '../config/exhibition.json';
+import type { ExhibitionConfig } from '../types/exhibition';
+
+const exhibitionConfig = config as unknown as ExhibitionConfig;
 
 export function Minimap() {
   const showMinimap = useExhibition((s) => s.showMinimap);
@@ -9,7 +12,7 @@ export function Minimap() {
 
   if (!showMinimap) return null;
 
-  const waypoints = config.tour.waypoints;
+  const waypoints = exhibitionConfig.tour.waypoints;
   const mapSize = 160;
   const scale = 3;
 

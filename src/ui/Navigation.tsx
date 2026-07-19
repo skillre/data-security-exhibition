@@ -1,5 +1,8 @@
 import { useExhibition } from '../store/useExhibition';
 import config from '../config/exhibition.json';
+import type { ExhibitionConfig } from '../types/exhibition';
+
+const exhibitionConfig = config as unknown as ExhibitionConfig;
 
 export function Navigation() {
   const cameraMode = useExhibition((s) => s.cameraMode);
@@ -11,7 +14,7 @@ export function Navigation() {
   const selectedExhibit = useExhibition((s) => s.selectedExhibit);
   const selectExhibit = useExhibition((s) => s.selectExhibit);
 
-  const waypoints = config.tour.waypoints;
+  const waypoints = exhibitionConfig.tour.waypoints;
 
   const handleBackToTour = () => {
     selectExhibit(null);
@@ -52,8 +55,8 @@ export function Navigation() {
             </svg>
           </div>
           <div>
-            <h1 style={{ color: 'white', fontWeight: 'bold', fontSize: '14px', margin: 0 }}>{config.exhibition.title}</h1>
-            <p style={{ color: 'rgba(147, 197, 253, 0.6)', fontSize: '12px', margin: 0 }}>{config.exhibition.subtitle}</p>
+            <h1 style={{ color: 'white', fontWeight: 'bold', fontSize: '14px', margin: 0 }}>{exhibitionConfig.exhibition.title}</h1>
+            <p style={{ color: 'rgba(147, 197, 253, 0.6)', fontSize: '12px', margin: 0 }}>{exhibitionConfig.exhibition.subtitle}</p>
           </div>
         </div>
 

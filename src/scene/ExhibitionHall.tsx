@@ -2,12 +2,15 @@ import { useEffect } from 'react';
 import { useProgress } from '@react-three/drei';
 import { useExhibition } from '../store/useExhibition';
 import config from '../config/exhibition.json';
+import type { ExhibitionConfig } from '../types/exhibition';
 import { Room } from './Room';
 import { Lighting } from './Lighting';
 import { Particles } from './Particles';
 import { GridFloor } from './GridFloor';
 import { ExhibitRouter } from './exhibits/ExhibitRouter';
 import { CameraController } from '../camera/CameraController';
+
+const exhibitionConfig = config as unknown as ExhibitionConfig;
 
 export function ExhibitionHall() {
   const { progress } = useProgress();
@@ -36,8 +39,8 @@ export function ExhibitionHall() {
       <GridFloor />
 
       {/* 各展区 */}
-      {config.zones.map((zone) => (
-        <group key={zone.id} position={zone.position}>
+      {exhibitionConfig.zones.map((zone) => (
+        <group key={zone.id} position={zone.position as [number, number, number]}>
           <Room
             width={zone.size[0]}
             depth={zone.size[1]}

@@ -5,6 +5,9 @@ import { useSpring } from '@react-spring/three';
 import * as THREE from 'three';
 import { useExhibition } from '../store/useExhibition';
 import config from '../config/exhibition.json';
+import type { ExhibitionConfig } from '../types/exhibition';
+
+const exhibitionConfig = config as unknown as ExhibitionConfig;
 
 export function CameraController() {
   const cameraMode = useExhibition((s) => s.cameraMode);
@@ -13,7 +16,7 @@ export function CameraController() {
 
   const { camera } = useThree();
 
-  const waypoint = config.tour.waypoints[currentWaypointIndex] || config.tour.waypoints[0];
+  const waypoint = exhibitionConfig.tour.waypoints[currentWaypointIndex] || exhibitionConfig.tour.waypoints[0];
 
   // 引导式模式的弹簧动画
   const [spring, api] = useSpring(() => ({
@@ -29,7 +32,7 @@ export function CameraController() {
   // 更新相机目标
   useEffect(() => {
     if (cameraMode === 'guided') {
-      const wp = config.tour.waypoints[currentWaypointIndex];
+      const wp = exhibitionConfig.tour.waypoints[currentWaypointIndex];
       if (wp) {
         api.start({
           px: wp.position[0],
