@@ -1,56 +1,48 @@
 export function Lighting() {
   return (
     <>
-      {/* 环境光 - 提供基础照明 */}
-      <ambientLight intensity={0.6} />
+      {/* 强环境光 - 模拟白天室外 */}
+      <ambientLight intensity={1.2} />
       
-      {/* 主方向光 - 模拟顶部灯光 */}
+      {/* 主方向光 - 模拟太阳 */}
       <directionalLight
-        position={[0, 10, 5]}
-        intensity={1.2}
+        position={[5, 15, 5]}
+        intensity={2.5}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
+        shadow-camera-far={50}
+        shadow-camera-left={-15}
+        shadow-camera-right={15}
+        shadow-camera-top={15}
+        shadow-camera-bottom={-15}
+        color="#ffffff"
       />
       
-      {/* 补光 - 减少阴影过暗 */}
+      {/* 补光 - 减少阴影 */}
       <directionalLight
-        position={[-5, 5, -5]}
-        intensity={0.4}
+        position={[-5, 10, -5]}
+        intensity={1.5}
+        color="#f5f5ff"
       />
       
-      {/* 点光源 - 展厅中央 */}
-      <pointLight position={[0, 3.5, 0]} intensity={0.5} color="#4fc3f7" />
+      {/* 顶部补光 */}
+      <directionalLight
+        position={[0, 15, 0]}
+        intensity={1.0}
+        color="#ffffff"
+      />
       
-      {/* 展位聚光灯 */}
-      <spotLight
-        position={[-6, 3.5, -7]}
-        angle={0.4}
-        penumbra={0.5}
+      {/* 前方补光 */}
+      <directionalLight
+        position={[0, 5, 10]}
         intensity={0.8}
-        color="#ffffff"
-        target-position={[-6, 1.5, -9]}
+        color="#f0f0ff"
       />
-      <spotLight
-        position={[0, 3.5, -7]}
-        angle={0.4}
-        penumbra={0.5}
-        intensity={0.8}
-        color="#ffffff"
-      />
-      <spotLight
-        position={[6, 3.5, -7]}
-        angle={0.4}
-        penumbra={0.5}
-        intensity={0.8}
-        color="#ffffff"
-      />
-      <spotLight
-        position={[0, 3.5, 7]}
-        angle={0.4}
-        penumbra={0.5}
-        intensity={0.8}
-        color="#ffffff"
+      
+      {/* 半球光 - 模拟天空散射 */}
+      <hemisphereLight
+        args={['#87ceeb', '#f0f0f0', 0.8]}
       />
     </>
   );
