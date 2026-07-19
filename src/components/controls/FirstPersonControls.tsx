@@ -10,7 +10,7 @@ const SPRINT_MULTIPLIER = 2;
 const BOUNDS = { minX: -9.5, maxX: 9.5, minZ: -9.5, maxZ: 9.5 };
 
 export function FirstPersonControls() {
-  const { camera } = useThree();
+  const { camera, scene } = useThree();
   const controlsRef = useRef<any>(null);
   const keysRef = useRef<Set<string>>(new Set());
   
@@ -48,6 +48,44 @@ export function FirstPersonControls() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedExhibit, selectExhibit]);
+
+  // 点击检测展品
+  useEffect(() => {
+    const handleClick = () => {
+      if (selectedExhibit) return;
+      if (!controlsRef.current?.isLocked) return;
+
+      // 从屏幕中心发射射线
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+
+      // 收集所有展品 meshes
+      const exhibitObjects: THREE.Object3D[] = [];
+      scene.traverse((obj) => {
+        if (obj.userData.exhibitId) {
+          exhibitObjects.push(obj);
+        }
+      });
+
+      const intersects = raycaster.intersectObjects(exhibitObjects, true);
+      
+      if (intersects.length > 0) {
+        // 找到最近的展品
+        let obj = intersects[0].object;
+        while (obj && !obj.userData.exhibitId) {
+          obj = obj.parent as THREE.Object3D;
+        }
+        
+        if (obj && obj.userData.exhibitId) {
+          selectExhibit(obj.userData.exhibitId);
+          controlsRef.current?.unlock();
+        }
+      }
+    };
+
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, [camera, scene, selectedExhibit, selectExhibit]);
 
   // 每帧更新移动
   useFrame((_, delta) => {

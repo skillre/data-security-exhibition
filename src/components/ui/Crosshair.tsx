@@ -5,34 +5,32 @@ export function Crosshair() {
   const isPointerLocked = useControlsStore((s) => s.isPointerLocked);
   const selectedExhibit = useExhibitionStore((s) => s.selectedExhibit);
 
-  // 调试信息 - 始终显示一个小型指示器
-  const debugInfo = (
-    <div style={{
-      position: 'fixed',
-      top: '10px',
-      right: '10px',
-      background: 'rgba(0,0,0,0.8)',
-      color: 'white',
-      padding: '8px 12px',
-      borderRadius: '4px',
-      fontSize: '12px',
-      fontFamily: 'monospace',
-      zIndex: 1000,
-      pointerEvents: 'none',
-    }}>
-      <div>Locked: {isPointerLocked ? '✅ Yes' : '❌ No'}</div>
-      <div>Exhibit: {selectedExhibit || 'None'}</div>
-    </div>
-  );
+  console.log('Crosshair render:', { isPointerLocked, selectedExhibit });
 
-  // 只在锁定模式且没有展品选中时显示准心
-  if (!isPointerLocked || selectedExhibit) {
-    return debugInfo;
-  }
-
+  // 始终显示调试信息
   return (
     <>
-      {debugInfo}
+      {/* 调试信息 */}
+      <div style={{
+        position: 'fixed',
+        top: '10px',
+        right: '10px',
+        background: 'rgba(0,0,0,0.9)',
+        color: 'white',
+        padding: '10px 15px',
+        borderRadius: '6px',
+        fontSize: '13px',
+        fontFamily: 'monospace',
+        zIndex: 1000,
+        pointerEvents: 'none',
+        border: '1px solid rgba(79, 195, 247, 0.5)',
+      }}>
+        <div style={{ marginBottom: '4px' }}>🔧 Debug Info</div>
+        <div>Locked: {isPointerLocked ? '✅ Yes' : '❌ No'}</div>
+        <div>Exhibit: {selectedExhibit || 'None'}</div>
+      </div>
+
+      {/* 准心 - 始终显示，但在锁定模式下更明显 */}
       <div style={{
         position: 'fixed',
         top: '50%',
@@ -40,15 +38,17 @@ export function Crosshair() {
         transform: 'translate(-50%, -50%)',
         zIndex: 100,
         pointerEvents: 'none',
+        opacity: isPointerLocked ? 1 : 0.3,
+        transition: 'opacity 0.2s',
       }}>
         {/* 外圈 */}
         <div style={{
           width: '40px',
           height: '40px',
-          border: '2px solid rgba(255, 255, 255, 0.6)',
+          border: `2px solid ${isPointerLocked ? 'rgba(79, 195, 247, 0.8)' : 'rgba(255, 255, 255, 0.3)'}`,
           borderRadius: '50%',
           position: 'relative',
-          boxShadow: '0 0 10px rgba(79, 195, 247, 0.3)',
+          boxShadow: isPointerLocked ? '0 0 15px rgba(79, 195, 247, 0.5)' : 'none',
         }}>
           {/* 中心点 */}
           <div style={{
@@ -58,73 +58,70 @@ export function Crosshair() {
             transform: 'translate(-50%, -50%)',
             width: '8px',
             height: '8px',
-            background: '#4fc3f7',
+            background: isPointerLocked ? '#4fc3f7' : '#666',
             borderRadius: '50%',
-            boxShadow: '0 0 15px #4fc3f7, 0 0 30px #4fc3f7',
+            boxShadow: isPointerLocked ? '0 0 10px #4fc3f7' : 'none',
           }} />
           
-          {/* 上线 */}
+          {/* 十字线 */}
           <div style={{
             position: 'absolute',
-            top: '-10px',
+            top: '-12px',
             left: '50%',
             transform: 'translateX(-50%)',
             width: '2px',
-            height: '12px',
-            background: 'rgba(255, 255, 255, 0.6)',
+            height: '14px',
+            background: isPointerLocked ? 'rgba(79, 195, 247, 0.8)' : 'rgba(255, 255, 255, 0.3)',
           }} />
-          
-          {/* 下线 */}
           <div style={{
             position: 'absolute',
-            bottom: '-10px',
+            bottom: '-12px',
             left: '50%',
             transform: 'translateX(-50%)',
             width: '2px',
-            height: '12px',
-            background: 'rgba(255, 255, 255, 0.6)',
+            height: '14px',
+            background: isPointerLocked ? 'rgba(79, 195, 247, 0.8)' : 'rgba(255, 255, 255, 0.3)',
           }} />
-          
-          {/* 左线 */}
           <div style={{
             position: 'absolute',
-            left: '-10px',
+            left: '-12px',
             top: '50%',
             transform: 'translateY(-50%)',
-            width: '12px',
+            width: '14px',
             height: '2px',
-            background: 'rgba(255, 255, 255, 0.6)',
+            background: isPointerLocked ? 'rgba(79, 195, 247, 0.8)' : 'rgba(255, 255, 255, 0.3)',
           }} />
-          
-          {/* 右线 */}
           <div style={{
             position: 'absolute',
-            right: '-10px',
+            right: '-12px',
             top: '50%',
             transform: 'translateY(-50%)',
-            width: '12px',
+            width: '14px',
             height: '2px',
-            background: 'rgba(255, 255, 255, 0.6)',
+            background: isPointerLocked ? 'rgba(79, 195, 247, 0.8)' : 'rgba(255, 255, 255, 0.3)',
           }} />
         </div>
         
         {/* 提示文字 */}
-        <div style={{
-          position: 'absolute',
-          top: '35px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          whiteSpace: 'nowrap',
-          color: 'rgba(255, 255, 255, 0.8)',
-          fontSize: '12px',
-          fontFamily: '"Noto Sans SC", sans-serif',
-          textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-          background: 'rgba(0,0,0,0.5)',
-          padding: '4px 8px',
-          borderRadius: '4px',
-        }}>
-          点击展品查看详情
-        </div>
+        {isPointerLocked && (
+          <div style={{
+            position: 'absolute',
+            top: '35px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            whiteSpace: 'nowrap',
+            color: '#4fc3f7',
+            fontSize: '12px',
+            fontFamily: '"Noto Sans SC", sans-serif',
+            textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+            background: 'rgba(0,0,0,0.7)',
+            padding: '5px 10px',
+            borderRadius: '4px',
+            border: '1px solid rgba(79, 195, 247, 0.3)',
+          }}>
+            点击展品查看详情
+          </div>
+        )}
       </div>
     </>
   );
