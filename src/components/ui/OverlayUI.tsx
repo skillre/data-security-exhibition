@@ -4,6 +4,7 @@ import { TourControls } from './TourControls';
 import { HelpOverlay } from './HelpOverlay';
 import { MiniMap } from './MiniMap';
 import { Crosshair } from './Crosshair';
+import { QualitySettings } from './QualitySettings';
 
 export function OverlayUI() {
   const selectedExhibit = useExhibitionStore((s) => s.selectedExhibit);
@@ -42,6 +43,9 @@ export function OverlayUI() {
       
       {/* 小地图 */}
       <MiniMap />
+
+      {/* 画质切换 */}
+      <QualitySettings />
     </div>
   );
 }

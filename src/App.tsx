@@ -6,6 +6,7 @@ import { OverlayUI } from './components/ui/OverlayUI';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { useExhibitionStore } from './store/useExhibitionStore';
 import { useLoadingStore } from './store/useLoadingStore';
+import { useSettingsStore } from './store/useSettingsStore';
 import { defaultConfig } from './config/exhibition';
 
 function detectWebGL(): boolean {
@@ -24,8 +25,11 @@ function LoadingManager() {
 
   useEffect(() => {
     setProgress(progress);
-    if (!active && progress === 100) {
-      setTimeout(() => setSceneReady(true), 500);
+    // 放宽判定：只要加载器不再活跃（!active）即视为就绪，
+    // 不强求 progress===100（历史坑：进度停在 <100 导致整个 UI 卡死）。
+    if (!active) {
+      const t = setTimeout(() => setSceneReady(true), 300);
+      return () => clearTimeout(t);
     }
   }, [progress, active, setProgress, setSceneReady]);
 
@@ -35,11 +39,21 @@ function LoadingManager() {
 export default function App() {
   const [webGLSupported, setWebGLSupported] = useState<boolean | null>(null);
   const setConfig = useExhibitionStore((s) => s.setConfig);
+  const setSceneReady = useExhibitionStore((s) => s.setSceneReady);
+  const dpr = useSettingsStore((s) => s.preset.dpr);
 
   useEffect(() => {
     setWebGLSupported(detectWebGL());
     setConfig(defaultConfig);
   }, [setConfig]);
+
+  // 硬超时兜底：无论资源是否加载完，进入后最多 5 秒强制就绪，
+  // 防止 useProgress 卡在 active 导致 OverlayUI 永远不显示。
+  useEffect(() => {
+    if (!webGLSupported) return;
+    const t = setTimeout(() => setSceneReady(true), 5000);
+    return () => clearTimeout(t);
+  }, [webGLSupported, setSceneReady]);
 
   if (webGLSupported === null) return null;
 
@@ -70,7 +84,7 @@ export default function App() {
     <div style={{ width: '100vw', height: '100vh', background: '#0a0a1a' }}>
       <Canvas
         shadows
-        dpr={[1, 2]}
+        dpr={[1, dpr]}
         gl={{
           antialias: true,
           powerPreference: 'high-performance',
