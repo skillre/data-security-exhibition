@@ -89,7 +89,7 @@ export function HelpOverlay() {
             paddingTop: '6px',
             marginTop: '4px',
           }}>
-            <span>ESC</span>
+            <span>Q</span>
             <span style={{ color: '#ff5252' }}>退出模式</span>
           </div>
         </div>

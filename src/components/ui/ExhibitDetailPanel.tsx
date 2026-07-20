@@ -13,7 +13,7 @@ export function ExhibitDetailPanel({ exhibit }: ExhibitDetailPanelProps) {
   // ESC 关闭面板
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' || e.code === 'KeyQ') {
         selectExhibit(null);
       }
     }
@@ -354,7 +354,7 @@ export function ExhibitDetailPanel({ exhibit }: ExhibitDetailPanelProps) {
         fontSize: '12px',
         color: 'rgba(255,255,255,0.4)',
       }}>
-        按 ESC 关闭面板
+        按 Q 或 ESC 关闭面板
       </div>
     </div>
   );

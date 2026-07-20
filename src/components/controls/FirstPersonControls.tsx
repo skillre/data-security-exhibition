@@ -22,6 +22,13 @@ export function FirstPersonControls() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current.add(e.code);
+      
+      // Q 键退出锁定模式
+      if (e.code === 'KeyQ') {
+        if (controlsRef.current?.isLocked) {
+          controlsRef.current.unlock();
+        }
+      }
     };
     
     const handleKeyUp = (e: KeyboardEvent) => {
