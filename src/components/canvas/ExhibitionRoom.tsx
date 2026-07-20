@@ -1,7 +1,22 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { useExhibitionStore } from '../../store/useExhibitionStore';
+
+// 预加载 PBR 贴图，避免首帧闪烁
+useTexture.preload([
+  '/assets/textures/floor/color.jpg',
+  '/assets/textures/floor/normal.jpg',
+  '/assets/textures/floor/roughness.jpg',
+  '/assets/textures/wall/color.jpg',
+  '/assets/textures/wall/normal.jpg',
+  '/assets/textures/wall/roughness.jpg',
+  '/assets/textures/metal/color.jpg',
+  '/assets/textures/metal/normal.jpg',
+  '/assets/textures/metal/roughness.jpg',
+  '/assets/textures/metal/metalness.jpg',
+]);
 
 export function ExhibitionRoom() {
   const config = useExhibitionStore((s) => s.config);
@@ -89,50 +104,70 @@ export function ExhibitionRoom() {
   );
 }
 
-// ==================== 地板组件 ====================
+// ==================== 地板组件（PBR 奶白大理石，低反光）====================
 function MarbleFloor({ size }: { size: [number, number] }) {
-  const texture = new THREE.TextureLoader().load('data:image/svg+xml,' + encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512">
-      <defs>
-        <filter id="marble">
-          <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="8" result="noise"/>
-          <feColorMatrix type="saturate" values="0" in="noise" result="gray"/>
-          <feComponentTransfer in="gray">
-            <feFuncR type="linear" slope="0.15" intercept="0.85"/>
-            <feFuncG type="linear" slope="0.12" intercept="0.88"/>
-            <feFuncB type="linear" slope="0.1" intercept="0.9"/>
-          </feComponentTransfer>
-        </filter>
-      </defs>
-      <rect width="512" height="512" fill="#f5f0e8" filter="url(#marble)"/>
-      <line x1="0" y1="256" x2="512" y2="256" stroke="#e0d8c8" stroke-width="2" opacity="0.5"/>
-      <line x1="256" y1="0" x2="256" y2="512" stroke="#e0d8c8" stroke-width="2" opacity="0.5"/>
-    </svg>
-  `));
-  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(4, 4);
+  const [colorMap, normalMap, roughnessMap] = useTexture([
+    '/assets/textures/floor/color.jpg',
+    '/assets/textures/floor/normal.jpg',
+    '/assets/textures/floor/roughness.jpg',
+  ]);
+
+  useMemo(() => {
+    colorMap.colorSpace = THREE.SRGBColorSpace;
+    for (const t of [colorMap, normalMap, roughnessMap]) {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(6, 6);
+    }
+  }, [colorMap, normalMap, roughnessMap]);
 
   return (
-    <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={size} />
-        <meshStandardMaterial map={texture} color="#f5f0e8" roughness={0.1} metalness={0.1} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
-        <planeGeometry args={size} />
-        <meshStandardMaterial color="#ffffff" transparent opacity={0.05} roughness={0} metalness={1} />
-      </mesh>
-    </group>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+      <planeGeometry args={size} />
+      {/* 奶白 color 叠加校正 + roughness≥0.7 + metalness=0 + 低 envMap 反射，避免刺眼 */}
+      <meshStandardMaterial
+        map={colorMap}
+        normalMap={normalMap}
+        roughnessMap={roughnessMap}
+        color="#f7f3ea"
+        roughness={0.82}
+        metalness={0}
+        envMapIntensity={0.35}
+      />
+    </mesh>
   );
 }
 
-// ==================== 墙面组件 ====================
+// ==================== 墙面组件（PBR 白色石膏漆）====================
 function TechWall({ position, rotation, width, height }: { position: [number, number, number]; rotation: [number, number, number]; width: number; height: number }) {
+  const [colorMap, normalMap, roughnessMap] = useTexture([
+    '/assets/textures/wall/color.jpg',
+    '/assets/textures/wall/normal.jpg',
+    '/assets/textures/wall/roughness.jpg',
+  ]);
+
+  // 多个墙面实例共享同一贴图对象；用固定 repeat（幂等设置，实例间不冲突）。
+  // 石膏材质较均匀，纹理密度差异不明显。
+  useMemo(() => {
+    colorMap.colorSpace = THREE.SRGBColorSpace;
+    for (const t of [colorMap, normalMap, roughnessMap]) {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(5, 2);
+    }
+  }, [colorMap, normalMap, roughnessMap]);
+
   return (
     <group position={position} rotation={rotation}>
       <mesh receiveShadow>
         <boxGeometry args={[width, height, 0.3]} />
-        <meshStandardMaterial color="#f0f4f8" roughness={0.3} metalness={0.1} />
+        <meshStandardMaterial
+          map={colorMap}
+          normalMap={normalMap}
+          roughnessMap={roughnessMap}
+          color="#f4f6f8"
+          roughness={0.9}
+          metalness={0}
+          envMapIntensity={0.4}
+        />
       </mesh>
       <mesh position={[0, 0, 0.16]}>
         <boxGeometry args={[width * 0.95, height * 0.4, 0.02]} />
@@ -173,13 +208,36 @@ function TechBeam({ position, width }: { position: [number, number, number]; wid
   );
 }
 
-// ==================== 柱子组件 ====================
+// ==================== 柱子组件（PBR 金属）====================
 function TechPillar({ position, height }: { position: [number, number, number]; height: number }) {
+  const [colorMap, normalMap, roughnessMap, metalnessMap] = useTexture([
+    '/assets/textures/metal/color.jpg',
+    '/assets/textures/metal/normal.jpg',
+    '/assets/textures/metal/roughness.jpg',
+    '/assets/textures/metal/metalness.jpg',
+  ]);
+
+  useMemo(() => {
+    colorMap.colorSpace = THREE.SRGBColorSpace;
+    for (const t of [colorMap, normalMap, roughnessMap, metalnessMap]) {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(1, 3);
+    }
+  }, [colorMap, normalMap, roughnessMap, metalnessMap]);
+
   return (
     <group position={position}>
-      <mesh>
+      <mesh castShadow>
         <boxGeometry args={[0.5, height, 0.5]} />
-        <meshStandardMaterial color="#f0f4f8" roughness={0.2} metalness={0.2} />
+        <meshStandardMaterial
+          map={colorMap}
+          normalMap={normalMap}
+          roughnessMap={roughnessMap}
+          metalnessMap={metalnessMap}
+          roughness={0.6}
+          metalness={1}
+          envMapIntensity={0.7}
+        />
       </mesh>
       <mesh position={[0, height / 2 - 0.1, 0]}>
         <boxGeometry args={[0.55, 0.2, 0.55]} />

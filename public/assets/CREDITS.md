@@ -10,7 +10,13 @@
 
 ## PBR 材质贴图
 
-_（P2 阶段补充）_
+均来自 [ambientCG](https://ambientcg.com/)，授权 CC0。每套仅保留 Color / Normal(GL) / Roughness（金属额外 Metalness），1K-JPG。
+
+| 目录 | 来源 | 授权 | 说明 |
+|------|------|------|------|
+| `textures/floor/` | [ambientCG - Marble 011](https://ambientcg.com/a/Marble011) | CC0 | 地面大理石，叠加奶白 `#f7f3ea` 校正 |
+| `textures/wall/` | [ambientCG - Painted Plaster 017](https://ambientcg.com/a/PaintedPlaster017) | CC0 | 墙面白色石膏漆 |
+| `textures/metal/` | [ambientCG - Metal 032](https://ambientcg.com/a/Metal032) | CC0 | 柱子金属 |
 
 ## 3D 模型
 
