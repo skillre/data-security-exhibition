@@ -1,5 +1,6 @@
 import { Environment } from '@react-three/drei';
 import { useExhibitionStore } from '../../store/useExhibitionStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import { ExhibitionRoom } from './ExhibitionRoom';
 import { ExhibitRenderer } from '../exhibits/ExhibitRenderer';
 import { TourPath } from '../tour/TourPath';
@@ -10,6 +11,7 @@ export function Scene() {
   const exhibits = useExhibitionStore((s) => s.exhibits);
   const selectExhibit = useExhibitionStore((s) => s.selectExhibit);
   const hoverExhibit = useExhibitionStore((s) => s.hoverExhibit);
+  const hdriResolution = useSettingsStore((s) => s.preset.hdriResolution);
 
   return (
     <>
@@ -21,8 +23,13 @@ export function Scene() {
 
       <Lighting />
       
-      {/* 白天环境 */}
-      <Environment preset="city" background={false} environmentIntensity={0.5} />
+      {/* HDRI 环境光：真实室内全景驱动环境光照与反射。
+          分辨率联动画质档；background={false} 保留蓝天背景，不过曝。*/}
+      <Environment
+        files={`/assets/hdri/interior_${hdriResolution}.hdr`}
+        background={false}
+        environmentIntensity={0.65}
+      />
       
       <ExhibitionRoom />
       
