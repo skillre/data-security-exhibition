@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useExhibitionStore } from '../../store/useExhibitionStore';
 import type { ExhibitItem } from '../../types/exhibit';
 
@@ -9,353 +9,493 @@ interface ExhibitDetailPanelProps {
 export function ExhibitDetailPanel({ exhibit }: ExhibitDetailPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const selectExhibit = useExhibitionStore((s) => s.selectExhibit);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
-  // ESC 关闭面板
+  // 入场动画
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      setIsVisible(true);
+    });
+  }, []);
+
+  // 关闭窗口
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      selectExhibit(null);
+    }, 300);
+  };
+
+  // ESC 或 Q 关闭面板
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape' || e.code === 'KeyQ') {
-        selectExhibit(null);
+        handleClose();
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectExhibit]);
+  }, []);
 
-  // 防止事件穿透到3D场景
+  // 点击窗口外关闭
   useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel) return;
-
-    const stopPropagation = (e: Event) => e.stopPropagation();
-    const events = ['pointerdown', 'pointerup', 'pointermove', 'wheel', 'click'];
-    events.forEach((event) => panel.addEventListener(event, stopPropagation));
-
+    function handleClickOutside(e: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        handleClose();
+      }
+    }
+    // 延迟添加，避免立即触发
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+    
     return () => {
-      events.forEach((event) => panel.removeEventListener(event, stopPropagation));
+      clearTimeout(timer);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
-  // 关闭面板
-  const handleClose = () => {
-    selectExhibit(null);
-  };
-
-  // 类型标签
+  // 类型配置
   const typeConfig = {
-    image: { icon: '🖼️', label: '图片展品', color: '#4fc3f7', bgColor: 'rgba(79,195,247,0.15)' },
-    video: { icon: '🎬', label: '视频展品', color: '#e91e63', bgColor: 'rgba(233,30,99,0.15)' },
-    document: { icon: '📄', label: '文档展品', color: '#ff9800', bgColor: 'rgba(255,152,0,0.15)' },
+    image: { icon: '🖼️', label: '图片展品', color: '#4fc3f7', gradient: 'linear-gradient(135deg, #0d47a1, #1565c0)' },
+    video: { icon: '🎬', label: '视频展品', color: '#e91e63', gradient: 'linear-gradient(135deg, #880e4f, #ad1457)' },
+    document: { icon: '📄', label: '文档展品', color: '#ff9800', gradient: 'linear-gradient(135deg, #e65100, #ef6c00)' },
   };
 
   const config = typeConfig[exhibit.type];
 
   return (
-    <div
-      ref={panelRef}
-      style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        width: '440px',
-        height: '100vh',
-        background: 'linear-gradient(180deg, #0a1628 0%, #0d2137 100%)',
-        borderLeft: '2px solid rgba(33, 150, 243, 0.3)',
-        color: 'white',
-        fontFamily: '"Noto Sans SC", sans-serif',
-        overflowY: 'auto',
-        zIndex: 1000,
-        boxShadow: '-10px 0 40px rgba(0,0,0,0.5)',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* 顶部栏 */}
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      pointerEvents: 'auto',
+    }}>
+      {/* 背景遮罩 */}
       <div style={{
-        padding: '16px 20px',
-        background: 'rgba(0,0,0,0.3)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-        }}>
-          <span style={{ fontSize: '18px' }}>{config.icon}</span>
-          <span style={{
-            fontSize: '12px',
-            padding: '4px 10px',
-            borderRadius: '12px',
-            background: config.bgColor,
-            color: config.color,
-            border: `1px solid ${config.color}40`,
-          }}>
-            {config.label}
-          </span>
-        </div>
-        
-        <button
-          onClick={handleClose}
-          style={{
-            background: 'rgba(255,255,255,0.1)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            color: 'white',
-            fontSize: '14px',
-            cursor: 'pointer',
-            borderRadius: '6px',
-            padding: '6px 12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-          }}
-        >
-          ✕ 关闭 <span style={{ fontSize: '11px', opacity: 0.6 }}>(ESC)</span>
-        </button>
-      </div>
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        backdropFilter: 'blur(8px)',
+        opacity: isVisible && !isClosing ? 1 : 0,
+        transition: 'opacity 0.3s ease',
+      }} />
 
-      {/* 内容区域 */}
-      <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-        {/* 媒体内容区 */}
-        <div style={{
-          background: 'rgba(0,0,0,0.3)',
-          borderRadius: '8px',
+      {/* 详情窗口 */}
+      <div
+        ref={panelRef}
+        style={{
+          position: 'relative',
+          width: '600px',
+          maxHeight: '80vh',
+          background: 'linear-gradient(180deg, rgba(10, 20, 40, 0.95) 0%, rgba(15, 30, 60, 0.95) 100%)',
+          borderRadius: '12px',
+          border: `2px solid ${config.color}40`,
+          boxShadow: `0 0 30px ${config.color}30, 0 0 60px ${config.color}20, inset 0 0 30px ${config.color}10`,
           overflow: 'hidden',
-          marginBottom: '20px',
-          border: '1px solid rgba(255,255,255,0.1)',
-        }}>
-          {exhibit.type === 'image' && (
-            <div style={{ padding: '10px' }}>
-              <img
-                src={exhibit.mediaSrc}
-                alt={exhibit.title}
-                style={{
-                  width: '100%',
-                  borderRadius: '6px',
-                  maxHeight: '300px',
-                  objectFit: 'contain',
-                  background: '#000',
-                }}
-                onError={(e) => {
-                  // 图片加载失败时显示占位
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-              <div style={{
-                textAlign: 'center',
-                padding: '20px',
-                color: 'rgba(255,255,255,0.5)',
-                fontSize: '13px',
-              }}>
-                🖼️ {exhibit.title}
-              </div>
-            </div>
-          )}
+          transform: isVisible && !isClosing ? 'scale(1)' : 'scale(0.8)',
+          opacity: isVisible && !isClosing ? 1 : 0,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          backdropFilter: 'blur(20px)',
+        }}
+      >
+        {/* 扫描线动画 */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: `linear-gradient(90deg, transparent, ${config.color}, transparent)`,
+          animation: 'scanline 3s linear infinite',
+          zIndex: 10,
+        }} />
 
-          {exhibit.type === 'video' && (
-            <div style={{ position: 'relative', paddingTop: '56.25%' }}>
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #1a0a2a, #0a1a3a)',
-              }}>
-                <div style={{ fontSize: '48px', marginBottom: '10px' }}>▶️</div>
-                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px' }}>
-                  点击播放视频
+        {/* 边角装饰 */}
+        <div style={{ position: 'absolute', top: '8px', left: '8px', width: '20px', height: '20px', borderTop: `2px solid ${config.color}`, borderLeft: `2px solid ${config.color}`, zIndex: 10 }} />
+        <div style={{ position: 'absolute', top: '8px', right: '8px', width: '20px', height: '20px', borderTop: `2px solid ${config.color}`, borderRight: `2px solid ${config.color}`, zIndex: 10 }} />
+        <div style={{ position: 'absolute', bottom: '8px', left: '8px', width: '20px', height: '20px', borderBottom: `2px solid ${config.color}`, borderLeft: `2px solid ${config.color}`, zIndex: 10 }} />
+        <div style={{ position: 'absolute', bottom: '8px', right: '8px', width: '20px', height: '20px', borderBottom: `2px solid ${config.color}`, borderRight: `2px solid ${config.color}`, zIndex: 10 }} />
+
+        {/* 顶部类型标签 */}
+        <div style={{
+          padding: '16px 24px',
+          background: config.gradient,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: `1px solid ${config.color}40`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '24px' }}>{config.icon}</span>
+            <span style={{
+              fontSize: '14px',
+              padding: '4px 12px',
+              borderRadius: '16px',
+              background: 'rgba(255, 255, 255, 0.15)',
+              color: 'white',
+              fontWeight: 500,
+            }}>
+              {config.label}
+            </span>
+          </div>
+          
+          <button
+            onClick={handleClose}
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              color: 'white',
+              fontSize: '14px',
+              cursor: 'pointer',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            }}
+          >
+            ✕ 关闭 <span style={{ fontSize: '11px', opacity: 0.7 }}>(Q)</span>
+          </button>
+        </div>
+
+        {/* 内容区域 */}
+        <div style={{
+          padding: '24px',
+          overflowY: 'auto',
+          maxHeight: 'calc(80vh - 80px)',
+        }}>
+          {/* 媒体内容区 */}
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.3)',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            marginBottom: '24px',
+            border: `1px solid ${config.color}30`,
+          }}>
+            {exhibit.type === 'image' && (
+              <div style={{ padding: '16px', textAlign: 'center' }}>
+                <img
+                  src={exhibit.mediaSrc}
+                  alt={exhibit.title}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '300px',
+                    borderRadius: '6px',
+                    border: `1px solid ${config.color}40`,
+                  }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+                <div style={{
+                  padding: '20px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontSize: '14px',
+                  fontStyle: 'italic',
+                }}>
+                  🖼️ {exhibit.title}
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', marginTop: '5px' }}>
+              </div>
+            )}
+
+            {exhibit.type === 'video' && (
+              <div style={{ position: 'relative', paddingTop: '56.25%' }}>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #1a0a2a, #0a1a3a)',
+                }}>
+                  <div style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    background: `radial-gradient(circle, ${config.color}, ${config.color}80)`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '36px',
+                    marginBottom: '16px',
+                    boxShadow: `0 0 30px ${config.color}60`,
+                    cursor: 'pointer',
+                  }}>
+                    ▶️
+                  </div>
+                  <div style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px', fontWeight: 500 }}>
+                    点击播放视频
+                  </div>
+                  <div style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '13px', marginTop: '8px' }}>
+                    {exhibit.title}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {exhibit.type === 'document' && (
+              <div style={{ padding: '40px', textAlign: 'center' }}>
+                <div style={{
+                  width: '100px',
+                  height: '100px',
+                  margin: '0 auto 20px',
+                  background: `linear-gradient(135deg, ${config.color}20, ${config.color}40)`,
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '48px',
+                  border: `2px dashed ${config.color}40`,
+                }}>
+                  📄
+                </div>
+                <div style={{ 
+                  color: 'rgba(255, 255, 255, 0.8)', 
+                  fontSize: '18px',
+                  fontWeight: 500,
+                  marginBottom: '8px',
+                }}>
                   {exhibit.title}
                 </div>
+                <div style={{ 
+                  color: 'rgba(255, 255, 255, 0.4)', 
+                  fontSize: '13px',
+                }}>
+                  点击下方按钮下载文档
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {exhibit.type === 'document' && (
-            <div style={{ padding: '30px', textAlign: 'center' }}>
-              <div style={{ fontSize: '64px', marginBottom: '15px' }}>📄</div>
-              <div style={{ 
-                color: 'rgba(255,255,255,0.7)', 
-                fontSize: '16px',
-                marginBottom: '20px',
-              }}>
-                {exhibit.title}
-              </div>
+          {/* 标题 */}
+          <h2 style={{
+            fontSize: '24px',
+            fontWeight: 600,
+            margin: '0 0 16px 0',
+            lineHeight: 1.3,
+            color: '#ffffff',
+          }}>
+            {exhibit.title}
+          </h2>
+
+          {/* 描述 */}
+          <p style={{
+            fontSize: '15px',
+            color: 'rgba(255, 255, 255, 0.7)',
+            marginBottom: '24px',
+            lineHeight: 1.7,
+          }}>
+            {exhibit.description}
+          </p>
+
+          {/* 分隔线 */}
+          <div style={{
+            height: '1px',
+            background: `linear-gradient(90deg, transparent, ${config.color}40, transparent)`,
+            margin: '24px 0',
+          }} />
+
+          {/* 详细介绍 */}
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: 500,
+              marginBottom: '16px',
+              color: config.color,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+            }}>
+              <span style={{
+                display: 'inline-block',
+                width: '4px',
+                height: '16px',
+                background: config.color,
+                borderRadius: '2px',
+              }} />
+              详细介绍
+            </h3>
+            <p style={{
+              fontSize: '14px',
+              lineHeight: 1.8,
+              color: 'rgba(255, 255, 255, 0.8)',
+              paddingLeft: '14px',
+              borderLeft: `2px solid ${config.color}20`,
+            }}>
+              {exhibit.detailContent}
+            </p>
+          </div>
+
+          {/* 分隔线 */}
+          <div style={{
+            height: '1px',
+            background: `linear-gradient(90deg, transparent, ${config.color}40, transparent)`,
+            margin: '24px 0',
+          }} />
+
+          {/* 操作按钮 */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+          }}>
+            {exhibit.type === 'image' && (
               <button
                 onClick={() => window.open(exhibit.mediaSrc, '_blank')}
                 style={{
-                  padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #ff9800, #f57c00)',
+                  padding: '12px 28px',
+                  background: `linear-gradient(135deg, ${config.color}, ${config.color}cc)`,
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   fontSize: '14px',
+                  fontWeight: 500,
                   cursor: 'pointer',
-                  display: 'inline-flex',
+                  display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
+                  boxShadow: `0 4px 15px ${config.color}40`,
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = `0 6px 20px ${config.color}60`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = `0 4px 15px ${config.color}40`;
+                }}
+              >
+                🖼️ 查看原图
+              </button>
+            )}
+
+            {exhibit.type === 'video' && (
+              <button
+                onClick={() => window.open(exhibit.mediaSrc, '_blank')}
+                style={{
+                  padding: '12px 28px',
+                  background: `linear-gradient(135deg, ${config.color}, ${config.color}cc)`,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: `0 4px 15px ${config.color}40`,
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = `0 6px 20px ${config.color}60`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = `0 4px 15px ${config.color}40`;
+                }}
+              >
+                ▶️ 播放视频
+              </button>
+            )}
+
+            {exhibit.type === 'document' && (
+              <button
+                onClick={() => window.open(exhibit.mediaSrc, '_blank')}
+                style={{
+                  padding: '12px 28px',
+                  background: `linear-gradient(135deg, ${config.color}, ${config.color}cc)`,
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: `0 4px 15px ${config.color}40`,
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = `0 6px 20px ${config.color}60`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = `0 4px 15px ${config.color}40`;
                 }}
               >
                 📥 下载文档
               </button>
-            </div>
-          )}
-        </div>
+            )}
 
-        {/* 标题 */}
-        <h2 style={{
-          fontSize: '22px',
-          fontWeight: 600,
-          margin: '0 0 12px 0',
-          lineHeight: 1.3,
-          color: '#ffffff',
-        }}>
-          {exhibit.title}
-        </h2>
-
-        {/* 描述 */}
-        <p style={{
-          fontSize: '14px',
-          color: 'rgba(255,255,255,0.6)',
-          marginBottom: '20px',
-          lineHeight: 1.6,
-        }}>
-          {exhibit.description}
-        </p>
-
-        {/* 分隔线 */}
-        <div style={{
-          height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(33,150,243,0.3), transparent)',
-          margin: '20px 0',
-        }} />
-
-        {/* 详细介绍 */}
-        <div style={{ marginBottom: '20px' }}>
-          <h3 style={{
-            fontSize: '15px',
-            fontWeight: 500,
-            marginBottom: '12px',
-            color: '#4fc3f7',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            📝 详细介绍
-          </h3>
-          <p style={{
-            fontSize: '14px',
-            lineHeight: 1.8,
-            color: 'rgba(255,255,255,0.8)',
-          }}>
-            {exhibit.detailContent}
-          </p>
-        </div>
-
-        {/* 分隔线 */}
-        <div style={{
-          height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(33,150,243,0.3), transparent)',
-          margin: '20px 0',
-        }} />
-
-        {/* 操作按钮 */}
-        <div style={{
-          display: 'flex',
-          gap: '10px',
-          flexWrap: 'wrap',
-        }}>
-          {exhibit.type === 'document' && (
             <button
-              onClick={() => window.open(exhibit.mediaSrc, '_blank')}
+              onClick={handleClose}
               style={{
-                flex: 1,
-                padding: '12px 16px',
-                background: 'linear-gradient(135deg, #ff9800, #f57c00)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '13px',
+                padding: '12px 28px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 500,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
+                gap: '8px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              📥 下载文档
+              ↩️ 关闭
             </button>
-          )}
-          
-          {exhibit.type === 'image' && (
-            <button
-              onClick={() => window.open(exhibit.mediaSrc, '_blank')}
-              style={{
-                flex: 1,
-                padding: '12px 16px',
-                background: 'linear-gradient(135deg, #4fc3f7, #0288d1)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-              }}
-            >
-              🖼️ 查看原图
-            </button>
-          )}
+          </div>
 
-          <button
-            onClick={handleClose}
-            style={{
-              flex: 1,
-              padding: '12px 16px',
-              background: 'rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.8)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              borderRadius: '6px',
-              fontSize: '13px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-            }}
-          >
-            ↩️ 返回展厅
-          </button>
+          {/* 底部提示 */}
+          <div style={{
+            marginTop: '20px',
+            textAlign: 'center',
+            fontSize: '12px',
+            color: 'rgba(255, 255, 255, 0.3)',
+          }}>
+            按 Q 或 ESC 关闭窗口 · 点击窗口外关闭
+          </div>
         </div>
       </div>
 
-      {/* 底部提示 */}
-      <div style={{
-        padding: '12px 20px',
-        background: 'rgba(0,0,0,0.3)',
-        borderTop: '1px solid rgba(255,255,255,0.1)',
-        textAlign: 'center',
-        fontSize: '12px',
-        color: 'rgba(255,255,255,0.4)',
-      }}>
-        按 Q 或 ESC 关闭面板
-      </div>
+      {/* CSS 动画 */}
+      <style>{`
+        @keyframes scanline {
+          0% { top: 0; }
+          100% { top: 100%; }
+        }
+      `}</style>
     </div>
   );
 }
