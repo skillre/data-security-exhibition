@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { ImageExhibit } from './ImageExhibit';
 import { VideoExhibit } from './VideoExhibit';
 import { DocumentExhibit } from './DocumentExhibit';
@@ -12,6 +12,8 @@ interface ExhibitRendererProps {
 }
 
 function ExhibitRendererInner({ exhibit, onClick, onHover }: ExhibitRendererProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   const Component = (() => {
     switch (exhibit.type) {
       case 'image':    return ImageExhibit;
@@ -21,23 +23,36 @@ function ExhibitRendererInner({ exhibit, onClick, onHover }: ExhibitRendererProp
     }
   })();
 
+  // 类型图标
+  const typeIcon = {
+    image: '🖼️',
+    video: '🎬',
+    document: '📄',
+  }[exhibit.type] || '📋';
+
   return (
     <group position={exhibit.position} rotation={exhibit.rotation}>
       <Component
         exhibit={exhibit}
         onClick={(e: any) => {
-          e.stopPropagation?.();
+          e.stopPropagation();
           onClick?.(exhibit);
         }}
         onPointerOver={(e: any) => {
-          e.stopPropagation?.();
+          e.stopPropagation();
+          setIsHovered(true);
           onHover?.(exhibit);
         }}
-        onPointerOut={() => onHover?.(null)}
+        onPointerOut={() => {
+          setIsHovered(false);
+          onHover?.(null);
+        }}
       />
       <ExhibitLabel
         title={exhibit.title}
-        description={exhibit.description}
+        subtitle={exhibit.subtitle}
+        icon={typeIcon}
+        isHovered={isHovered}
       />
     </group>
   );

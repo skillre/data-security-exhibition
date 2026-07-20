@@ -15,6 +15,7 @@ export const defaultConfig: ExhibitionConfig = {
     {
       id: 'report-001',
       title: '安全评估报告',
+      subtitle: '2024年度数据安全评估',
       description: '2024年度数据安全评估总报告',
       detailContent: '本报告涵盖了企业数据安全现状的全面评估，包括数据分类分级、访问控制、加密措施等核心维度的评估结果。',
       type: 'image',
@@ -28,6 +29,7 @@ export const defaultConfig: ExhibitionConfig = {
     {
       id: 'video-001',
       title: '项目纪实',
+      subtitle: '全流程记录视频',
       description: '数据安全评估服务全流程记录',
       detailContent: '本视频记录了数据安全评估服务从启动到交付的完整过程。',
       type: 'video',
@@ -42,6 +44,7 @@ export const defaultConfig: ExhibitionConfig = {
     {
       id: 'doc-001',
       title: '安全体系文档',
+      subtitle: '企业数据安全管理体系',
       description: '建立的企业数据安全管理体系',
       detailContent: '本次评估帮助客户建立了完整的数据安全管理体系，涵盖组织架构、制度流程、技术措施三大板块。',
       type: 'document',
@@ -56,6 +59,7 @@ export const defaultConfig: ExhibitionConfig = {
     {
       id: 'achievement-001',
       title: '成果展示',
+      subtitle: '数据安全防护体系成果',
       description: '数据安全评估服务核心成果',
       detailContent: '通过本次评估，帮助客户建立了完整的数据安全防护体系，显著提升了数据安全水平。',
       type: 'image',

@@ -5,6 +5,7 @@ export type ExhibitCategory = 'report' | 'video' | 'document' | 'achievement';
 export interface ExhibitItem {
   id: string;
   title: string;
+  subtitle?: string;
   description: string;
   detailContent: string;
   type: ExhibitType;
